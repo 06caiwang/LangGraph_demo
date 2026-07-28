@@ -34,7 +34,7 @@ def orchestrator(state: State):
 
     result = planner.invoke(
         [
-            HumanMessage(content=f"为主题{state['topic']}制定报告大纲，要包含三到五个章节，具体个数你自己定，但要在个数要求内")
+            HumanMessage(content=f"为主题{state['topic']}制定报告大纲，要包含两个章节")
         ]
     )
 
@@ -97,6 +97,6 @@ builder.add_edge("synthesizer", END)
 
 graph = builder.compile()
 
-graph.invoke({
+print(graph.invoke({
     "topic": "中国近代史"
-})
+}))
