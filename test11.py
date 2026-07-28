@@ -5,6 +5,7 @@ from langchain.chat_models import init_chat_model
 from langchain_core.messages import AnyMessage, AIMessage, SystemMessage, ToolMessage, HumanMessage
 from langchain_tavily import TavilySearch
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.constants import START, END
 from langgraph.graph import StateGraph
 
@@ -82,28 +83,32 @@ agent_builder.add_conditional_edges(
 agent_builder.add_edge("tool_node", "llm_call")
 
 # 内存记忆
-checkpointer = InMemorySaver()
+# checkpointer = InMemorySaver()
 
 # 5. 编译图
-agent_search = agent_builder.compile(checkpointer=checkpointer)
+# agent_search = agent_builder.compile(checkpointer=checkpointer)
 
 # 线程配置
-config = {"configurable": {"thread_id": "123"}}
+# config = {"configurable": {"thread_id": "123"}}
 
-# 7. 执行图
-result = agent_search.invoke(
-    {"message": [HumanMessage(content="查询今天南京的天气，不必查未来几日的，简单的概括即可，同时不用每个地区的，南京整个地方大概的天气即可")]},
-    config=config
-)
-# result["message"][-1].pretty_print()
+DB_URI = "postgresql://postgres:123456@127.0.0.1:5432/postgres"
+with PostgresSaver.from_conn_string(DB_URI) as checkpointer:
+    checkpointer.setup()
 
-# 第二次执行
-result = agent_search.invoke(
-    {"message": [HumanMessage(content="刚才我们聊了什么？")]},
-    config=config)
+    agent_search = agent_builder.compile(checkpointer=checkpointer)
+    config = {"configurable": {"thread_id": "123456"}}
 
-# result["message"][-1].pretty_print()
+    result = agent_search.invoke(
+        {"message": [HumanMessage(
+            content="查询今天南京的天气，不必查未来几日的，简单的概括即可，同时不用每个地区的，南京整个地方大概的天气即可")]},
+        config=config
+    )
+    # result["message"][-1].pretty_print()
 
-# result 是最终的状态结果
-for r in result["message"]:
-    r.pretty_print()
+    # 第二次执行
+    result = agent_search.invoke(
+        {"message": [HumanMessage(content="刚才我们聊了什么？")]},
+        config=config)
+
+    for r in result["message"]:
+        r.pretty_print()
