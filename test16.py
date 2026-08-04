@@ -58,6 +58,6 @@ for chunk in graph.stream(
     },
     context={"user_id": "1"}
 ):
-    for node, update in chunk.items():
+    for node,update in chunk.items():
         print(f"节点：{node}更新的最新消息如下")
         update["messages"][-1].pretty_print()
